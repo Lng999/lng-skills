@@ -1,2 +1,3 @@
 - 2026-04-01 14:32 — notes: skill ideas
 - 2026-04-01 21:26 — notes cleanup
+- 2026-04-06 14:53 — wip notes
