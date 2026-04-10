@@ -2,3 +2,4 @@
 - 2026-04-01 21:26 — notes cleanup
 - 2026-04-06 14:53 — wip notes
 - 2026-04-10 20:46 — devlog: brief format
+- 2026-04-10 21:44 — notes: patronaj
