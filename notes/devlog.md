@@ -4,3 +4,4 @@
 - 2026-04-10 20:46 — devlog: brief format
 - 2026-04-10 21:44 — notes: patronaj
 - 2026-04-14 16:23 — notes: skill ideas
+- 2026-04-17 12:56 — notes: skill ideas
