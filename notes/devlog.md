@@ -6,3 +6,4 @@
 - 2026-04-14 16:23 — notes: skill ideas
 - 2026-04-17 12:56 — notes: skill ideas
 - 2026-04-17 17:46 — update notes
+- 2026-04-20 12:31 — notes: patronaj
