@@ -11,3 +11,4 @@
 - 2026-04-22 20:38 — wip notes
 - 2026-04-29 17:55 — devlog: brief format
 - 2026-04-30 20:54 — todo update
+- 2026-05-05 19:50 — wip notes
