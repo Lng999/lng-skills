@@ -15,3 +15,4 @@
 - 2026-05-05 20:02 — todo update
 - 2026-05-05 20:06 — devlog: brief format
 - 2026-05-08 13:37 — notes cleanup
+- 2026-05-09 13:20 — notes: skill ideas
