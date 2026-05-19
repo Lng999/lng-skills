@@ -18,3 +18,4 @@
 - 2026-05-09 13:20 — notes: skill ideas
 - 2026-05-12 14:56 — wip notes
 - 2026-05-18 14:12 — wip notes
+- 2026-05-19 14:41 — notes cleanup
