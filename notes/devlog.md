@@ -28,3 +28,4 @@
 - 2026-08-03 22:14 — wip notes
 - 2026-08-03 22:32 — notes cleanup
 - 2026-08-04 11:16 — devlog: brief format
+- 2026-08-04 11:29 — notes: skill ideas
