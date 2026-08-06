@@ -33,3 +33,4 @@
 - 2026-08-05 21:21 — wip notes
 - 2026-08-05 21:37 — todo update
 - 2026-08-05 21:50 — notes cleanup
+- 2026-08-06 15:11 — notes: skill ideas
