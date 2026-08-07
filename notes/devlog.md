@@ -35,3 +35,4 @@
 - 2026-08-05 21:50 — notes cleanup
 - 2026-08-06 15:11 — notes: skill ideas
 - 2026-08-07 16:10 — devlog update
+- 2026-08-07 16:44 — devlog: brief format
