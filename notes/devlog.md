@@ -51,3 +51,4 @@
 - 2026-08-14 15:08 — devlog update
 - 2026-08-15 13:56 — devlog update
 - 2026-08-16 11:26 — wip notes
+- 2026-08-18 22:30 — notes: skill ideas
