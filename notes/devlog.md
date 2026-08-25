@@ -59,3 +59,4 @@
 - 2026-08-24 14:19 — update notes
 - 2026-08-24 14:35 — devlog update
 - 2026-08-24 16:38 — wip notes
+- 2026-08-25 18:56 — notes cleanup
