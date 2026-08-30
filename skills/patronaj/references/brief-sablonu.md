@@ -6,6 +6,15 @@ niyet beyanı değil.
 
 Aşağıdakini `Agent(prompt: ...)` içine olduğu gibi doldur.
 
+> **BAĞLAM bloğunun mekanik yarısını elle yazma:**
+> `bash ~/.claude/skills/patronaj/hooks/baglam-topla.sh <hedef dosyalar> [--sembol <ad>]`
+> proje tipini, paket yöneticisini, test/build komutlarını ve her hedef dosyanın
+> boyutu + son 3 commit'ini paste-ready üretir. Sen sadece kalıbı, kararları ve
+> tuzakları eklersin.
+>
+> **`patronaj-isci` ajanına veriyorsan 7. blok (RAPOR FORMATI) gereksiz** — o ajanın
+> sistem prompt'unda zaten sabit. Genel bir ajana veriyorsan yaz.
+
 ---
 
 ## Şablon

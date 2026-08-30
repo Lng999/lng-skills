@@ -9,3 +9,6 @@ __pycache__/
 .patronaj-active
 settings.local.json
 .env
+
+# kapsam-kontrol.sh taban dosyasi
+.patronaj/

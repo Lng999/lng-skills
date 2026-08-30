@@ -1,7 +1,7 @@
 ---
 name: patronaj
 description: "Patron/işçi delegasyon modu. Ana döngüdeki ajan PATRON olur: kullanıcıyla tüm konuşmayı o yürütür, tüm bağlamı o taşır, ama HİÇBİR kod değişikliğini kendi eliyle yapmaz — her değişiklik için ayrıntılı bir brief yazıp alt Opus ajanına yaptırır, dönen işi doğrular ve kullanıcıya raporlar. Şu durumlarda yükle: kullanıcı 'patronaj', 'patron modu', 'boss mode', 'sen yapma alt ajana yaptır', 'delege et', 'orkestra modu' dediğinde; uzun sürecek çok adımlı bir proje işine başlarken ana bağlamı temiz tutmak gerektiğinde."
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Patronaj
@@ -43,20 +43,60 @@ Yasağı çiğnemek zorunda kaldığın anda **dur ve söyle**: "Bunu patronaj d
 
 ---
 
+## Araçlar
+
+Bu skill'in üç mekanik parçası var. Prose kuralları gözle uygulamak yerine bunları koş.
+
+| Araç | Ne yapar | Ne zaman |
+| --- | --- | --- |
+| `patronaj-isci` **ajanı** | İşçi sözleşmesini (rapor formatı, kapsam disiplini, bağımlılık yasağı) sistem prompt'una gömer | Her fırlatmada: `subagent_type:'patronaj-isci'` |
+| `hooks/baglam-topla.sh` | Proje tipi, paket yöneticisi, test komutları, hedef dosyaların boyutu + son 3 commit'i toplar | Brief yazmadan önce |
+| `hooks/kapsam-kontrol.sh` | `kesisim` → paralel işçi çakışması; `anlik` → taban; `dogrula` → kapsam kaçağı | Fırlatmadan önce ve İşçi dönünce |
+
+`patronaj-isci` ajanı kurulu değilse (`~/.claude/agents/patronaj-isci.md` yok)
+`subagent_type:'general-purpose'` kullan ve brief'e 7. bloğu (RAPOR FORMATI) ekle.
+
+---
+
 ## Döngü
+
+`$P` = `~/.claude/skills/patronaj/hooks`
 
 ```
 1  ANLA        Kullanıcıyla konuş. Belirsizliği burada bitir — İşçi soru soramaz.
+
 2  KEŞİF       Arazi bilinmiyorsa: Agent(subagent_type:'Explore', model:'opus')
                Salt-okunur, geriye sadece anlayış döner. Patron dosya dökmez.
-3  BRIEF       İş emrini yaz. Kalite buradan geliyor. → references/brief-sablonu.md
-4  FIRLAT      Agent(subagent_type:'general-purpose', model:'opus', prompt: <brief>)
+
+3  BRIEF       bash $P/baglam-topla.sh <hedef dosyalar> [--sembol <ad>]
+               → BAĞLAM bloğunun mekanik yarısını üretir, çıktıyı brief'e yapıştır.
+               Kalanını (kalıp, kararlar, tuzaklar) elle yaz.
+               → references/brief-sablonu.md
+
+3b PRE-FLIGHT  Paralel fırlatacaksan ÖNCE:
+               bash $P/kapsam-kontrol.sh kesisim "<işçi1 dosyaları>" "<işçi2 dosyaları>"
+               exit 1 ise dosya kümeleri çakışıyor — birleştir ya da sıraya diz.
+
+4  TABAN       bash $P/kapsam-kontrol.sh anlik
+               Delegasyondan önceki kirli dosyaları kaydeder, yoksa mevcut
+               değişiklikler İşçi'nin üstüne yazılır.
+
+5  FIRLAT      Agent(subagent_type:'patronaj-isci', model:'opus', prompt: <brief>)
                Bağımsız işler AYNI mesajda, çoklu Agent çağrısı olarak.
-5  DOĞRULA     git diff --stat → sadece değişen hunk'ları oku → test/build koş.
+
+6  DOĞRULA     bash $P/kapsam-kontrol.sh dogrula <brief'in DOKUNULACAK listesi>
+               exit 1 = kapsam kaçağı, commit atma, İşçi'ye sor.
+               Sonra: git diff -- <dosya> ile değişen hunk'ları oku, test/build koş.
                İşçi'nin raporu iddiadır, kanıt değil.
-6  RAPORLA     Kullanıcıya: ne değişti, neden, ne doğrulandı, ne açık kaldı.
-7  DÜZELT      Eksik varsa YENİ ajan açma → SendMessage ile aynı İşçi'ye dön.
+
+7  RAPORLA     Kullanıcıya: ne değişti, neden, ne doğrulandı, ne açık kaldı.
+               Doğrulandıysa commit at.
+
+8  DÜZELT      Eksik varsa YENİ ajan açma → SendMessage ile aynı İşçi'ye dön.
+               İkinci tur gerektiyse brief'te ne eksikti, tek satır ders yaz.
 ```
+
+`.patronaj/` klasörü betiğin durum dosyasıdır; projenin `.gitignore`'una ekle.
 
 ---
 
@@ -77,6 +117,12 @@ olmayan her şeyi ya uydurur ya atlar. Yedi blok, hiçbiri opsiyonel değil:
 
 Tam şablon ve iyi/kötü brief karşılaştırması: `references/brief-sablonu.md`
 
+> **`patronaj-isci` ajanını kullanıyorsan 7. blok gereksiz.** Rapor formatı, kapsam
+> disiplini ve "bağımlılık ekleme" kuralı o ajanın sistem prompt'una gömülüdür; brief'te
+> tekrar yazmana gerek yok. Blok 4'ü (DOKUNULMAYACAKLAR) yine de yaz — projeye özel
+> yasaklar ajanın bilemeyeceği şeylerdir. Genel bir ajana (`general-purpose`) veriyorsan
+> yedi bloğun hepsi zorunlu.
+
 > **Brief'e harcadığın token, işi kendin yapmaktan ucuzdur.** İnce brief =
 > doğaçlayan işçi = ikinci tur. Kalın brief = tek turda biten iş.
 
@@ -85,8 +131,9 @@ Tam şablon ve iyi/kötü brief karşılaştırması: `references/brief-sablonu.
 ## Paralellik
 
 - **Bağımsız işler tek mesajda birlikte fırlatılır.** Sırayla beklemek boşa duvar saati.
-- **Sert kural: iki işçinin dosya listeleri kesişemez.** Kesişiyorsa ya birleştir
-  ya sıraya diz. Aynı dosyaya iki yazma = sessiz veri kaybı.
+- **Sert kural: iki işçinin dosya listeleri kesişemez.** Aynı dosyaya iki yazma = sessiz
+  veri kaybı. Gözle kontrol etme, betiğe sor:
+  `bash hooks/kapsam-kontrol.sh kesisim "<küme1>" "<küme2>"` — exit 1 ise çakışma var.
 - **Bağımlı işler seri gider.** A'nın çıktısı B'nin girdisiyse, A'nın raporu
   gelmeden B'nin brief'i yazılamaz.
 - **Riskli veya geniş yüzeyli lane'ler** `isolation: 'worktree'` ile izole edilir.
@@ -116,14 +163,23 @@ Karşılığında bağlam tasarrufunu kaybedersin, o yüzden istisna olarak kull
 
 Ajan raporları yanlış veya yanıltıcı olabilir. "Yaptım, çalışıyor" bir iddiadır.
 
+Üç kırmızı bayraktan **birincisi mekanik, betiğe ver:**
+
 ```bash
-git diff --stat                 # yüzey: beklediğin dosyalar mı, beklediğin büyüklükte mi
+bash ~/.claude/skills/patronaj/hooks/kapsam-kontrol.sh dogrula src/a.ts src/b.ts
+```
+
+- `KAPSAM KACAGI` (exit 1) → brief'te olmayan dosya değişmiş. Commit atma, İşçi'ye sor.
+- `DOKUNULMAMIS` → brief'te vardı ama değişmemiş. İş yarım kalmış olabilir.
+- `TEMIZ` → diff brief'in dışına taşmamış. Şimdi içeriğe bak.
+
+Kalan ikisi hâlâ senin gözünle:
+
+```bash
 git diff -- <dosya>             # sadece değişen hunk'lar, tüm dosya değil
 <projenin test/build komutu>    # sözleşme gerçekten tutuyor mu
 ```
 
-Üç kırmızı bayrak:
-- Diff'te brief'te olmayan dosya var → kapsam kaçağı, sor.
 - Rapor "büyük ölçüde tamam" / "temelde çalışıyor" diyor → tamam değil demektir.
 - Test koşulmamış ya da "koşamadım" diye geçiştirilmiş → sen koş.
 
@@ -152,6 +208,7 @@ Patron doğrudan elini sürebilir, ama **her seferinde sebebini söyleyerek**:
   yeni `Agent` çağrısı sıfırdan başlar. Düzeltme turları için `SendMessage` kullan.
 - Her `Agent` çağrısında `model` alanını **açıkça** yaz — `model: 'opus'`.
 - `Explore` ve `Plan` salt-okunurdur (Edit/Write yok) — keşif için ideal, iş için değil.
+- `patronaj-isci`'nin `Agent` aracı yoktur; kendi alt ajanını açamaz, zincir sende biter.
 - Delege ettiğin aramayı bir daha kendin koşma; sonucu bekle.
 
 ---
@@ -182,6 +239,20 @@ oturum bitene kadar sürer.
 **Sert mod (opsiyonel):** Patron'un `Edit`/`Write` çağrılarını gerçekten *bloklayan*
 bir PreToolUse kancası istiyorsan → `references/sert-mod-hook.md`. Varsayılan olarak
 kurulu değildir; bu skill disiplinle çalışır, zorlamayla değil.
+
+---
+
+## İşçi ajanının kurulumu (gerekli)
+
+`agents/patronaj-isci.md` dosyası `~/.claude/agents/` altında olmalı, skill klasöründe
+değil — Claude Code ajan tanımlarını orada arar:
+
+```bash
+cp ~/.claude/skills/patronaj/agents/patronaj-isci.md ~/.claude/agents/
+```
+
+Kurulunca `Agent(subagent_type:'patronaj-isci', model:'opus', prompt: <brief>)` çalışır.
+Ajan listesinde görünmüyorsa oturumu yeniden başlat.
 
 ---
 
