@@ -1,0 +1,5 @@
+# Kancalar Git Bash ile calisiyor: CRLF ile checkout edilirse bash `$'\r'` hatasi verip
+# kanca zincirini sessizce oldurur. Bu dosyalari her platformda LF tut.
+*.sh  text eol=lf
+*.py  text eol=lf
+* text=auto

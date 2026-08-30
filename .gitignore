@@ -1,0 +1,11 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+
+# Yerel calisma durumu, asla commitlenmez
+*.local
+.patronaj-active
+settings.local.json
+.env
