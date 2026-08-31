@@ -67,3 +67,4 @@
 - 2026-08-28 12:22 — notes: patronaj
 - 2026-08-28 21:05 — notes cleanup
 - 2026-08-29 14:08 — devlog update
+- 2026-08-31 14:18 — notes: skill ideas
