@@ -3,6 +3,7 @@
 #
 #   baglam-topla.sh <dosya> [dosya...] [--sembol <isim>]
 #
+# Yollar repo kokune gore verilir (kapsam-kontrol.sh ile ayni bicim).
 # Uretir: proje tipi, paket yoneticisi, test/build komutlari, repo durumu ve her hedef
 # dosya icin boyut + son 3 commit. --sembol verilirse o sembolun tanim yerlerini de bulur.
 # Cikti dogrudan brief'in "## BAGLAM" blogu altina yapistirilmak icin bicimlendirilmistir.
@@ -12,20 +13,22 @@
 
 set -u
 
-FILES=""
+# Dizi: bosluklu yollar bolunmesin, "*" iceren yollar genislemesin.
+FILES=()
 SYMBOL=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --sembol) SYMBOL=${2:-}; shift 2 || shift ;;
-    -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
-    *) FILES="$FILES $1"; shift ;;
+    -h|--help) awk 'NR == 1 { next } /^#/ { sub(/^# ?/, ""); print; next } { exit }' "$0"; exit 2 ;;
+    *) FILES+=("$1"); shift ;;
   esac
 done
 
-[ -n "${FILES# }" ] || { echo "kullanim: baglam-topla.sh <dosya...> [--sembol <isim>]"; exit 2; }
+[ ${#FILES[@]} -gt 0 ] || { echo "kullanim: baglam-topla.sh <dosya...> [--sembol <isim>]"; exit 2; }
 
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
   echo "hata: git deposu icinde degilsin"; exit 2; }
+BASLANGIC=$PWD
 cd "$ROOT" || exit 2
 
 say() { printf '%s\n' "$*"; }
@@ -39,14 +42,21 @@ if [ -f package.json ]; then
   PROJE="Node/JS"
   if   [ -f pnpm-lock.yaml ];    then PM="pnpm"
   elif [ -f yarn.lock ];         then PM="yarn"
-  elif [ -f bun.lockb ];         then PM="bun"
+  elif [ -f bun.lock ] || [ -f bun.lockb ]; then PM="bun"
   elif [ -f package-lock.json ]; then PM="npm"
   else PM="npm (lockfile yok)"; fi
-  if command -v python3 >/dev/null 2>&1; then
-    KOMUTLAR=$(python3 - <<'PY' 2>/dev/null || :
+  # Windows'ta python3 cogu zaman Store'un sahte kisayoludur; gercekten calisani sec.
+  PYBIN=""
+  for cand in python3 python; do
+    if "$cand" -c 'import sys' >/dev/null 2>&1; then PYBIN=$cand; break; fi
+  done
+  if [ -n "$PYBIN" ]; then
+    # UTF-8'i zorla: Windows'ta varsayilan cp125x Turkce karakterleri bozar.
+    # tr: Windows Python'u satir sonlarina \r ekler.
+    KOMUTLAR=$(PYTHONIOENCODING=utf-8 "$PYBIN" - <<'PY' 2>/dev/null | tr -d '\r' || :
 import json
 try:
-    d = json.load(open("package.json", encoding="utf-8"))
+    d = json.load(open("package.json", encoding="utf-8-sig"))
 except Exception:
     raise SystemExit(0)
 scripts = d.get("scripts") or {}
@@ -66,12 +76,17 @@ elif [ -f go.mod ];        then PROJE="Go";         PM="go";    KOMUTLAR="test: 
 build: go build ./..."
 elif [ -f pyproject.toml ];then PROJE="Python";     PM="pip/uv/poetry (pyproject.toml)"
 elif [ -f requirements.txt ]; then PROJE="Python";  PM="pip"
-elif ls ./*.sln ./*.csproj >/dev/null 2>&1; then PROJE=".NET"; PM="dotnet"; KOMUTLAR="build: dotnet build"
+else
+  # "ls *.sln *.csproj" ikisinden biri yoksa basarisiz olur; tek tek bak.
+  for f in ./*.sln ./*.csproj; do
+    if [ -e "$f" ]; then PROJE=".NET"; PM="dotnet"; KOMUTLAR="build: dotnet build"; break; fi
+  done
 fi
 
 MAKE_HEDEF=""
 if [ -f Makefile ]; then
-  MAKE_HEDEF=$(grep -E '^[a-zA-Z0-9_.-]+:' Makefile 2>/dev/null | cut -d: -f1 | head -12 | tr '\n' ' ')
+  # ".PHONY:" gibi ozel hedefler ve "X:=deger" atamalari hedef sayilmaz.
+  MAKE_HEDEF=$(grep -E '^[a-zA-Z0-9_-][a-zA-Z0-9_.-]*:([^=]|$)' Makefile 2>/dev/null | cut -d: -f1 | head -12 | tr '\n' ' ')
 fi
 
 # --- cikti --------------------------------------------------------------------
@@ -97,11 +112,13 @@ say "- **Repo:** dal \`$BRANCH\`, son commit \`$LAST\`, kaydedilmemis ${DIRTY:-0
 say ""
 say "- **Hedef dosyalar:**"
 
-for f in $FILES; do
+for f in "${FILES[@]}"; do
   if [ -f "$f" ]; then
-    N=$(sed -n '$=' "$f" 2>/dev/null || echo 0)
+    N=$(sed -n '$=' "$f" 2>/dev/null)
     say "    - \`$f\` — ${N:-0} satir"
-    git log -3 --format='        - %h %ad %s' --date=short -- "$f" 2>/dev/null | sed 's/$//' || :
+    git log -3 --format='        - %h %ad %s' --date=short -- "$f" 2>/dev/null || :
+  elif [ "$BASLANGIC" != "$PWD" ] && [ -f "$BASLANGIC/$f" ]; then
+    say "    - \`$f\` — **repo kokunde yok** (bulundugun dizine gore var; yolu repo kokune gore ver)"
   else
     say "    - \`$f\` — **YOK, yeni olusturulacak**"
   fi
@@ -110,8 +127,7 @@ done
 if [ -n "$SYMBOL" ]; then
   say ""
   say "- **\`$SYMBOL\` gecen yerler:**"
-  # shellcheck disable=SC2086
-  HITS=$(git grep -n --fixed-strings -- "$SYMBOL" $FILES 2>/dev/null | head -20)
+  HITS=$(git -c core.quotePath=false grep -n --fixed-strings -- "$SYMBOL" "${FILES[@]}" 2>/dev/null | head -20)
   if [ -n "$HITS" ]; then
     printf '%s\n' "$HITS" | sed 's/^/    - /'
   else
