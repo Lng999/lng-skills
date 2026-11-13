@@ -126,7 +126,10 @@ Değişiklikten sonra:
 
 ```bash
 ./sync.sh          # ~/.claude/skills/ -> repo
+bash tests/hooks.sh   # kancalarin davranis testleri (gecici git depolarinda kosar)
 ```
+
+CI aynı testleri Linux, macOS (`/bin/bash` 3.2) ve Windows Git Bash'te koşar.
 
 ---
 
