@@ -19,7 +19,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Syntax
         run: for f in sync.sh skills/*/hooks/*.sh tests/*.sh; do bash -n "$f" || exit 1; done
