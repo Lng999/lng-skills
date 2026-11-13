@@ -3,7 +3,7 @@
 # Repo kokunden calistir: ./sync.sh
 set -eu
 
-REPO_DIR=$(CDPATH= cd "$(dirname "$0")" && pwd)
+REPO_DIR=$(CDPATH='' cd "$(dirname "$0")" && pwd)
 SRC="$HOME/.claude/skills"
 AGENTS="$HOME/.claude/agents"
 
@@ -25,6 +25,8 @@ done
 find "$REPO_DIR/skills" -name '__pycache__' -type d -prune -exec rm -rf {} + 2>/dev/null || :
 find "$REPO_DIR/skills" -name '.DS_Store' -type f -delete 2>/dev/null || :
 find "$REPO_DIR/skills" -name '.patronaj' -type d -prune -exec rm -rf {} + 2>/dev/null || :
+# Editor/elle alinan yedekler (orn. SKILL.md.bak) public repoya gitmesin.
+find "$REPO_DIR/skills" -type f \( -name '*.bak' -o -name '*.orig' -o -name '*~' -o -name '*.swp' \) -delete 2>/dev/null || :
 
 # Ajan tanimlari iki yerde yasiyor: skill icinde (kaynak, repoya giden) ve
 # ~/.claude/agents/ icinde (Claude Code'un okudugu kurulu kopya). Ayrisirlarsa uyar.

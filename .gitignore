@@ -12,3 +12,9 @@ settings.local.json
 
 # kapsam-kontrol.sh taban dosyasi
 .patronaj/
+
+# Editor / elle alinan yedekler (sync.sh de bunlari ayiklar)
+*.bak
+*.orig
+*~
+*.swp
