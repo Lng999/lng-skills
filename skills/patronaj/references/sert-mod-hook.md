@@ -89,7 +89,7 @@ import json
 print(json.dumps({"hookSpecificOutput":{
   "hookEventName":"PreToolUse",
   "permissionDecision":"deny",
-  "permissionDecisionReason":"Patronaj sert modu: Patron kod degistirmez. Brief yaz ve Agent(subagent_type=\"general-purpose\", model=\"opus\") ile Isciye yaptir. Bilerek istisna yapiyorsan once patron modunu kapat."
+  "permissionDecisionReason":"Patronaj sert modu: Patron kod degistirmez. Brief yaz ve Agent(subagent_type=\"patronaj-isci\", model=\"opus\") ile Isciye yaptir. Bilerek istisna yapiyorsan once patron modunu kapat."
 }}))'
 exit 0
 ```

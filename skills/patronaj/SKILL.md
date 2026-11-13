@@ -133,7 +133,7 @@ Tam şablon ve iyi/kötü brief karşılaştırması: `references/brief-sablonu.
 - **Bağımsız işler tek mesajda birlikte fırlatılır.** Sırayla beklemek boşa duvar saati.
 - **Sert kural: iki işçinin dosya listeleri kesişemez.** Aynı dosyaya iki yazma = sessiz
   veri kaybı. Gözle kontrol etme, betiğe sor:
-  `bash hooks/kapsam-kontrol.sh kesisim "<küme1>" "<küme2>"` — exit 1 ise çakışma var.
+  `bash $P/kapsam-kontrol.sh kesisim "<küme1>" "<küme2>"` — exit 1 ise çakışma var.
 - **Bağımlı işler seri gider.** A'nın çıktısı B'nin girdisiyse, A'nın raporu
   gelmeden B'nin brief'i yazılamaz.
 - **Riskli veya geniş yüzeyli lane'ler** `isolation: 'worktree'` ile izole edilir.
@@ -288,7 +288,7 @@ olduğunu ve hangi tetikleyicilerde devreye girileceğini söyler.
 - **Windows:** `.sh` doğrudan çalışmaz →
   `"C:/Program Files/Git/bin/bash.exe" "C:/Users/<kullanici>/.claude/skills/patronaj/hooks/patronaj-brief.sh"`
 - **`SessionStart` dizisinde zaten girdi varsa yanına ekle**, diziyi değiştirme.
-- Kancayı doğrulamak için: `echo '{}' | bash hooks/patronaj-brief.sh` — geçerli JSON dönmeli.
+- Kancayı doğrulamak için: `echo '{}' | bash ~/.claude/skills/patronaj/hooks/patronaj-brief.sh` — geçerli JSON dönmeli.
 - Kartı kısaltmak/uzatmak istersen `references/oturum-karti.md` dosyasını düzenle; kanca
   içeriği o dosyadan okur, betiği değiştirmene gerek yok.
 - Kartı istemiyorsan kancayı `settings.json`'dan kaldır; skill `/patronaj` ile çağrılabilir kalır.
