@@ -12,14 +12,28 @@
 #
 #   kapsam-kontrol.sh kesisim "a.ts b.ts" "b.ts c.ts" [...]
 #       Paralel isci FIRLATMADAN ONCE calistir. Dosya kumeleri kesisiyorsa exit 1.
+#       Kume icindeki yollar bosluk ile ayrilir.
 #
 # Yollar repo kokune gore verilir (git diff --name-only ne veriyorsa o bicimde).
 
 set -u
+# sort/comm ayni siralamayi kullansin; yerel ayara gore degisen siralama comm'u bozar.
+export LC_ALL=C
 
 usage() {
-  sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
+  awk 'NR == 1 { next } /^#/ { sub(/^# ?/, ""); print; next } { exit }' "$0"
   exit 2
+}
+
+# "./a.ts" ve Windows'tan gelen "src\a.ts" bicimlerini git'in bicimine cevir.
+normalize() {
+  # shellcheck disable=SC1003  # tr'ye giden tek bir ters bolu, tirnak kacisi degil
+  tr '\\' '/' | sed -e 's#^\(\./\)*##' -e '/^$/d'
+}
+
+satir_say() {
+  N=$(sed -n '$=' "$1" 2>/dev/null)
+  echo "${N:-0}"
 }
 
 [ $# -ge 1 ] || usage
@@ -31,26 +45,28 @@ if [ "$CMD" = "kesisim" ]; then
   [ $# -ge 2 ] || { echo "kesisim: en az iki kume gerekir"; exit 2; }
   TMP_DIR=$(mktemp -d) || exit 2
   trap 'rm -rf "$TMP_DIR"' EXIT
-  i=0
+  n=0
+  set -f  # "src/*.ts" gibi bir kume kabukta genislemesin
   for set_arg in "$@"; do
-    i=$((i + 1))
-    printf '%s\n' $set_arg | sed '/^$/d' | sort -u > "$TMP_DIR/$i"
+    n=$((n + 1))
+    # shellcheck disable=SC2086  # bosluga gore bolme kasitli
+    printf '%s\n' $set_arg | normalize | sort -u > "$TMP_DIR/$n"
   done
+  set +f
   FOUND=0
-  a=0
-  for fa in "$TMP_DIR"/*; do
-    a=$((a + 1))
-    b=0
-    for fb in "$TMP_DIR"/*; do
-      b=$((b + 1))
-      [ "$b" -le "$a" ] && continue
-      OVERLAP=$(comm -12 "$fa" "$fb")
+  a=1
+  while [ "$a" -le "$n" ]; do
+    b=$((a + 1))
+    while [ "$b" -le "$n" ]; do
+      OVERLAP=$(comm -12 "$TMP_DIR/$a" "$TMP_DIR/$b")
       if [ -n "$OVERLAP" ]; then
         FOUND=1
         echo "CAKISMA  kume $a <-> kume $b:"
         printf '%s\n' "$OVERLAP" | sed 's/^/    /'
       fi
+      b=$((b + 1))
     done
+    a=$((a + 1))
   done
   if [ "$FOUND" -eq 1 ]; then
     echo
@@ -61,6 +77,11 @@ if [ "$CMD" = "kesisim" ]; then
   exit 0
 fi
 
+case "$CMD" in
+  anlik|dogrula) ;;
+  *) usage ;;
+esac
+
 # --- buradan sonrasi git gerektirir -------------------------------------------
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
   echo "hata: git deposu icinde degilsin"; exit 2; }
@@ -69,21 +90,30 @@ cd "$ROOT" || exit 2
 STATE_DIR="$ROOT/.patronaj"
 BASE_FILE="$STATE_DIR/taban.txt"
 
+# core.quotePath=false + -z: Turkce/bosluklu dosya adlari git'in "g\303\274..."
+# tirnakli bicimine donmesin, yoksa izinli listeyle hic eslesmez.
+# --no-renames: yeniden adlandirmada eski ad da "degisti" sayilsin.
 # Betigin kendi durum klasoru asla degisiklik sayilmaz; yoksa taban.txt kendini
 # kapsam kacagi olarak raporlar.
 degisenler() {
   {
-    git diff --name-only HEAD 2>/dev/null
-    git ls-files --others --exclude-standard 2>/dev/null
-  } | sed '/^$/d' | grep -v '^\.patronaj/' | sort -u
+    if git rev-parse -q --verify HEAD >/dev/null 2>&1; then
+      git -c core.quotePath=false diff --name-only --no-renames -z HEAD 2>/dev/null
+    else
+      # Henuz commit yok: indekse alinmislar + calisma agacindakiler.
+      git -c core.quotePath=false diff --name-only --no-renames -z --cached 2>/dev/null
+      git -c core.quotePath=false diff --name-only --no-renames -z 2>/dev/null
+    fi
+    git -c core.quotePath=false ls-files -z --others --exclude-standard 2>/dev/null
+  } | tr '\0' '\n' | sed '/^$/d' | grep -v '^\.patronaj/' | sort -u
 }
 
 case "$CMD" in
   anlik)
     mkdir -p "$STATE_DIR" 2>/dev/null || :
-    degisenler > "$BASE_FILE"
-    N=$(sed -n '$=' "$BASE_FILE" 2>/dev/null || echo 0)
-    echo "taban alindi: ${N:-0} dosya zaten kirli (.patronaj/taban.txt)"
+    degisenler > "$BASE_FILE" || {
+      echo "hata: $BASE_FILE yazilamadi"; exit 2; }
+    echo "taban alindi: $(satir_say "$BASE_FILE") dosya zaten kirli (.patronaj/taban.txt)"
     exit 0
     ;;
 
@@ -92,7 +122,7 @@ case "$CMD" in
     TMP_DIR=$(mktemp -d) || exit 2
     trap 'rm -rf "$TMP_DIR"' EXIT
 
-    printf '%s\n' "$@" | sed '/^$/d' | sort -u > "$TMP_DIR/izinli"
+    printf '%s\n' "$@" | normalize | sort -u > "$TMP_DIR/izinli"
     degisenler > "$TMP_DIR/simdi"
 
     if [ -f "$BASE_FILE" ]; then
@@ -105,7 +135,7 @@ case "$CMD" in
     comm -13 "$TMP_DIR/izinli" "$TMP_DIR/degisen" > "$TMP_DIR/ekstra"
     comm -23 "$TMP_DIR/izinli" "$TMP_DIR/degisen" > "$TMP_DIR/eksik"
 
-    echo "izinli: $(sed -n '$=' "$TMP_DIR/izinli" 2>/dev/null || echo 0) dosya | degisen: $(sed -n '$=' "$TMP_DIR/degisen" 2>/dev/null || echo 0) dosya"
+    echo "izinli: $(satir_say "$TMP_DIR/izinli") dosya | degisen: $(satir_say "$TMP_DIR/degisen") dosya"
     echo
 
     if [ -s "$TMP_DIR/eksik" ]; then
@@ -124,9 +154,5 @@ case "$CMD" in
 
     echo "TEMIZ  diff brief'in disina tasmadi."
     exit 0
-    ;;
-
-  *)
-    usage
     ;;
 esac
