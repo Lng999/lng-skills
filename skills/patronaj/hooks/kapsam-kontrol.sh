@@ -2,8 +2,9 @@
 # Patronaj kapsam kontrolu.
 #
 #   kapsam-kontrol.sh anlik
-#       Delegasyondan ONCE calistir. O andaki kirli dosya listesini .patronaj/taban.txt'e
-#       yazar; boylece isci donusunde "zaten kirliydi" olanlar kacak sayilmaz.
+#       Delegasyondan ONCE calistir. O andaki kirli dosyalari icerik ozetleriyle
+#       .patronaj/taban.txt'e yazar; boylece isci donusunde "zaten kirliydi" olanlar
+#       kacak sayilmaz - ama isci o dosyalara da dokunduysa yakalanir.
 #
 #   kapsam-kontrol.sh dogrula <izinli-dosya> [izinli-dosya...]
 #       Isci donusunde calistir. Brief'in DOKUNULACAK listesini argüman olarak ver.
@@ -108,10 +109,22 @@ degisenler() {
   } | tr '\0' '\n' | sed '/^$/d' | grep -v '^\.patronaj/' | sort -u
 }
 
+# stdin'deki her yol icin "<ozet>\t<yol>". Silinmis dosyanin ozeti "-".
+imzala() {
+  while IFS= read -r p; do
+    if [ -f "$p" ]; then
+      h=$(git hash-object -- "$p" 2>/dev/null) || h="?"
+    else
+      h="-"
+    fi
+    printf '%s\t%s\n' "$h" "$p"
+  done
+}
+
 case "$CMD" in
   anlik)
     mkdir -p "$STATE_DIR" 2>/dev/null || :
-    degisenler > "$BASE_FILE" || {
+    degisenler | imzala > "$BASE_FILE" || {
       echo "hata: $BASE_FILE yazilamadi"; exit 2; }
     echo "taban alindi: $(satir_say "$BASE_FILE") dosya zaten kirli (.patronaj/taban.txt)"
     exit 0
@@ -126,7 +139,17 @@ case "$CMD" in
     degisenler > "$TMP_DIR/simdi"
 
     if [ -f "$BASE_FILE" ]; then
-      comm -23 "$TMP_DIR/simdi" <(sort -u "$BASE_FILE") > "$TMP_DIR/degisen"
+      # Tabandaki dosya: ozeti degistiyse (ya da isci onu geri aldiysa) isci dokunmus.
+      # Eski bicimli taban (ozetsiz, sadece yol) yalnizca adla karsilastirilir.
+      awk -F '\t' 'NF >= 2 { print $2; next } { print }' "$BASE_FILE" > "$TMP_DIR/taban_yol"
+      sort -u "$TMP_DIR/simdi" "$TMP_DIR/taban_yol" | imzala > "$TMP_DIR/simdi_imza"
+      awk -F '\t' '
+        FNR == NR { if (NF >= 2) h[$2] = $1; else h[$0] = "*"; next }
+        {
+          if (!($2 in h)) { print $2; next }
+          if (h[$2] == "*") next
+          if (h[$2] != $1) print $2
+        }' "$BASE_FILE" "$TMP_DIR/simdi_imza" | sort -u > "$TMP_DIR/degisen"
     else
       cp "$TMP_DIR/simdi" "$TMP_DIR/degisen"
       echo "not: taban yok (once 'anlik' calistirilmamis), tum kirli dosyalar bu ise sayiliyor"
