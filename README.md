@@ -52,41 +52,59 @@ tek bir şeyi ciddiye alıyor: brief'i kalınlaştır, sonra dönen diff'e körl
 
 ```bash
 git clone https://github.com/Lng999/lng-skills.git
-cp -r lng-skills/skills/patronaj ~/.claude/skills/patronaj
+mkdir -p ~/.claude/skills ~/.claude/agents
+cp -R lng-skills/skills/patronaj ~/.claude/skills/
 
 # İşçi ajanı: Claude Code ajan tanımlarını ~/.claude/agents/ altında arar,
 # skill klasöründe değil. Bu adım atlanırsa delegasyon çalışmaz.
-mkdir -p ~/.claude/agents
 cp ~/.claude/skills/patronaj/agents/patronaj-isci.md ~/.claude/agents/
 ```
+
+Hedef `~/.claude/skills/` olarak verildiği için aynı iki `cp` komutu **güncelleme** için de
+çalışır (`git -C lng-skills pull` sonrası). Hedefi `~/.claude/skills/patronaj` diye
+verme: klasör zaten varsa `cp` kopyayı içine, `patronaj/patronaj/` olarak koyar.
 
 Claude Code `~/.claude/skills/` altını kendiliğinden tarar. Yeni oturumda `/patronaj`
 ile çağırabilir ya da "patron modu" diyebilirsin.
 
-Betikler `bash` + `git` ister; `baglam-topla.sh`'nin `package.json` okuması için `python3`
-gerekir (yoksa o bölüm atlanır, betik yine çalışır). `jq` gerekmez.
+Betikler `bash` + `git` ister; `baglam-topla.sh`'nin `package.json` okuması için
+`python3` (ya da `python`) gerekir (yoksa o bölüm atlanır, betik yine çalışır).
+`jq` gerekmez. macOS'un hazır bash 3.2'si ve Windows'ta Git Bash yeterli.
 
 Projelerin `.gitignore`'una `.patronaj/` ekle — `kapsam-kontrol.sh` taban dosyasını
 oraya yazar.
 
 ### Her oturumda otomatik hatırlatma (opsiyonel)
 
-`~/.claude/settings.json` içindeki `SessionStart` dizisine **ekle** (varsa mevcut
-girdileri silme):
+`~/.claude/settings.json` içinde `hooks.SessionStart` dizisine aşağıdaki girdiyi **ekle**
+(dizide başka girdiler varsa onları silme; `hooks` anahtarı hiç yoksa bu bloğun tamamını
+koy):
 
 ```json
 {
-  "type": "command",
-  "command": "$HOME/.claude/skills/patronaj/hooks/patronaj-brief.sh",
-  "timeout": 10,
-  "statusMessage": "Patronaj protokolu yukleniyor"
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/skills/patronaj/hooks/patronaj-brief.sh",
+            "timeout": 10,
+            "statusMessage": "Patronaj protokolu yukleniyor"
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
-Windows'ta `.sh` doğrudan çalışmaz, Git Bash üzerinden mutlak yolla ver:
+Windows'ta `.sh` doğrudan çalışmaz, Git Bash üzerinden mutlak yolla ver. JSON içinde
+tırnaklar kaçışlı yazılır:
 
-```
-"C:/Program Files/Git/bin/bash.exe" "C:/Users/<kullanici>/.claude/skills/patronaj/hooks/patronaj-brief.sh"
+```json
+"command": "\"C:/Program Files/Git/bin/bash.exe\" \"C:/Users/<kullanici>/.claude/skills/patronaj/hooks/patronaj-brief.sh\""
 ```
 
 Kanca protokolü her oturumda hazır eder ama **modu açmaz** — patron modu ancak sen
@@ -96,8 +114,8 @@ istediğinde devreye girer. Doğrulamak için:
 echo '{}' | bash ~/.claude/skills/patronaj/hooks/patronaj-brief.sh
 ```
 
-Geçerli JSON dönmeli. Dönmüyorsa `python3` PATH'te değildir; kanca o durumda sessizce
-çıkar, oturumu bozmaz.
+Geçerli JSON dönmeli. Dönmüyorsa ne `python3` ne `python` PATH'te çalışıyordur; kanca
+o durumda sessizce çıkar, oturumu bozmaz.
 
 ---
 
