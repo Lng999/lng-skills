@@ -1,0 +1,70 @@
+- 2026-04-01 14:32 — notes: skill ideas
+- 2026-04-01 21:26 — notes cleanup
+- 2026-04-06 14:53 — wip notes
+- 2026-04-10 20:46 — devlog: brief format
+- 2026-04-10 21:44 — notes: patronaj
+- 2026-04-14 16:23 — notes: skill ideas
+- 2026-04-17 12:56 — notes: skill ideas
+- 2026-04-17 17:46 — update notes
+- 2026-04-20 12:31 — notes: patronaj
+- 2026-04-21 15:34 — notes: patronaj
+- 2026-04-22 20:38 — wip notes
+- 2026-04-29 17:55 — devlog: brief format
+- 2026-04-30 20:54 — todo update
+- 2026-05-05 19:50 — wip notes
+- 2026-05-05 20:02 — todo update
+- 2026-05-05 20:06 — devlog: brief format
+- 2026-05-08 13:37 — notes cleanup
+- 2026-05-09 13:20 — notes: skill ideas
+- 2026-05-12 14:56 — wip notes
+- 2026-05-18 14:12 — wip notes
+- 2026-05-19 14:41 — notes cleanup
+- 2026-05-19 18:10 — notes: patronaj
+- 2026-05-24 18:03 — devlog update
+- 2026-05-25 18:14 — notes: skill ideas
+- 2026-05-26 18:00 — todo update
+- 2026-05-28 20:11 — notes: skill ideas
+- 2026-08-03 21:57 — devlog update
+- 2026-08-03 22:14 — wip notes
+- 2026-08-03 22:32 — notes cleanup
+- 2026-08-04 11:16 — devlog: brief format
+- 2026-08-04 11:29 — notes: skill ideas
+- 2026-08-04 15:56 — update notes
+- 2026-08-05 21:21 — wip notes
+- 2026-08-05 21:37 — todo update
+- 2026-08-05 21:50 — notes cleanup
+- 2026-08-06 15:11 — notes: skill ideas
+- 2026-08-07 16:10 — devlog update
+- 2026-08-07 16:44 — devlog: brief format
+- 2026-08-09 22:49 — update notes
+- 2026-08-10 17:24 — update notes
+- 2026-08-11 15:01 — notes: patronaj
+- 2026-08-11 15:11 — notes: patronaj
+- 2026-08-11 15:57 — wip notes
+- 2026-08-11 16:29 — notes: patronaj
+- 2026-08-12 14:35 — wip notes
+- 2026-08-12 15:08 — devlog update
+- 2026-08-12 15:33 — wip notes
+- 2026-08-12 16:18 — devlog update
+- 2026-08-13 15:36 — update notes
+- 2026-08-13 16:10 — todo update
+- 2026-08-14 15:08 — devlog update
+- 2026-08-15 13:56 — devlog update
+- 2026-08-16 11:26 — wip notes
+- 2026-08-18 22:30 — notes: skill ideas
+- 2026-08-18 23:11 — devlog update
+- 2026-08-18 23:17 — notes: skill ideas
+- 2026-08-19 12:50 — notes cleanup
+- 2026-08-19 20:00 — notes cleanup
+- 2026-08-24 14:19 — update notes
+- 2026-08-24 14:35 — devlog update
+- 2026-08-24 16:38 — wip notes
+- 2026-08-25 18:56 — notes cleanup
+- 2026-08-27 20:59 — wip notes
+- 2026-08-27 21:21 — devlog update
+- 2026-08-28 10:55 — wip notes
+- 2026-08-28 11:23 — devlog update
+- 2026-08-28 12:22 — notes: patronaj
+- 2026-08-28 21:05 — notes cleanup
+- 2026-08-29 14:08 — devlog update
+- 2026-08-31 14:18 — notes: skill ideas
