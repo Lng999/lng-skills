@@ -1,7 +1,20 @@
 # lng-skills
 
-Agent skills for Claude Code and any other `SKILL.md` harness.
-Written in Turkish — the protocols themselves are language-agnostic.
+[![test](https://github.com/Lng999/lng-skills/actions/workflows/test.yml/badge.svg)](https://github.com/Lng999/lng-skills/actions/workflows/test.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+Günlük işte kullandığım ajan skill'leri. Claude Code ve Codex için, `SKILL.md`
+okuyan her harness'ta çalışır. Ortak fikir: **pahalı model düşünür, ucuz/hızlı model
+yazar** ve dönen iş her zaman doğrulanır.
+
+| Skill | Harness | Ne yapar |
+| --- | --- | --- |
+| [`patronaj`](#patronaj--patronişçi-delegasyon-modu) | Claude Code | Ana ajan Patron olur: konuşma ve bağlam onda, kodu 7 bloklu brief ile alt Opus ajanına yazdırır, diff'i kendisi doğrular |
+| [`sol-patronaj`](#sol-patronaj--codex-planlar-opus-yazar) | Codex | Aynı kalıbın Codex sürümü: GPT-6.1 Sol planlar ve inceler, kodu `claude` CLI üzerinden Opus 4.6/4.5 yazar |
+
+- [Kurulum](#kurulum)
+- [Kullandığım diğer skill'ler](#kullandığım-diğer-skilller)
+- [Geliştirme](#geliştirme)
 
 ---
 
@@ -46,6 +59,29 @@ yönlendirme altyapısı sunuyor; hiçbiri işin kalite belirleyici kısmına �
 yazdığı brief'in anatomisine ve dönen işin doğrulanmasına** — odaklanmıyor. `patronaj`
 tek bir şeyi ciddiye alıyor: brief'i kalınlaştır, sonra dönen diff'e körlemesine güvenme.
 
+### `sol-patronaj` — Codex planlar, Opus yazar
+
+Codex'in ana döngüsü **GPT-6.1 Sol** üzerinde çalışırken kullanılır. Sol bütün
+düşünme işini yapar: kodu okur, kök nedeni bulur, mimariyi seçer, brief'i yazar,
+dönen diff'i inceler ve son kararı verir. **Dosyaları kendisi değiştirmez.** Her
+kod değişikliği `scripts/opus.sh` ile `claude` CLI'ye, Claude Opus 4.6'ya gider
+(meşgulse otomatik olarak Opus 4.5'e düşer).
+
+| Dosya | Ne var |
+| --- | --- |
+| `SKILL.md` | Kesin kurallar, iş akışı (anla → planla → brief → devret → incele → yinele → raporla), brief şablonu, paralel hatlar, istisnalar |
+| `scripts/opus.sh` | Brief'i Opus'a verir; son raporu, `OPUS_MODEL` ve takip için `OPUS_SESSION` satırlarını basar. `-r <session>` ile aynı oturuma düzeltme gönderilir |
+
+```bash
+S=~/.agents/skills/sol-patronaj/scripts/opus.sh
+$S -C /path/to/repo -b brief.md            # Opus 4.6, effort high
+$S -C /path/to/repo -b fix.md -r <OPUS_SESSION>   # aynı oturumda düzeltme
+```
+
+Gereksinimler: `claude` CLI kurulu ve giriş yapılmış olmalı, `python3` gerekir.
+Opus `bypassPermissions` ile çalıştığı için Codex'in `sandbox_mode = "danger-full-access"`
+olması gerekir ve `-C` her zaman doğru proje klasörünü göstermelidir.
+
 ---
 
 ## Kurulum
@@ -63,6 +99,13 @@ cp ~/.claude/skills/patronaj/agents/patronaj-isci.md ~/.claude/agents/
 Hedef `~/.claude/skills/` olarak verildiği için aynı iki `cp` komutu **güncelleme** için de
 çalışır (`git -C lng-skills pull` sonrası). Hedefi `~/.claude/skills/patronaj` diye
 verme: klasör zaten varsa `cp` kopyayı içine, `patronaj/patronaj/` olarak koyar.
+
+**Codex (`sol-patronaj`):** Codex kullanıcı skill'lerini `~/.agents/skills/` altında arar.
+
+```bash
+mkdir -p ~/.agents/skills
+cp -R lng-skills/skills/sol-patronaj ~/.agents/skills/
+```
 
 Claude Code `~/.claude/skills/` altını kendiliğinden tarar. Yeni oturumda `/patronaj`
 ile çağırabilir ya da "patron modu" diyebilirsin.
@@ -119,9 +162,25 @@ o durumda sessizce çıkar, oturumu bozmaz.
 
 ---
 
+## Kullandığım diğer skill'ler
+
+Bu repoda olmayan, başkalarının yazdığı ama sık kullandığım skill'ler. Kendi
+repolarından kur:
+
+| Skill | Kaynak | Ne için |
+| --- | --- | --- |
+| `fable-orchestration` | [avenoxai/avenoxskills](https://github.com/avenoxai/avenoxskills) | Üst model ana döngüde, iş Opus alt ajanlarına; `patronaj`'ın ilham kaynağı |
+| `codex-fleet` | [avenoxai/avenoxskills](https://github.com/avenoxai/avenoxskills) | `codex exec` ile kod işleri, `gpt-image-2` ile görsel üretimi, paralel Codex hatları |
+| `omp-fleet` | [avenoxai/avenoxskills](https://github.com/avenoxai/avenoxskills) | Oh My Pi ile ucuz bağlam toplama ve paralel işler |
+| `gptpro`, `gptpro-handoff` | [avenoxai/avenoxskills](https://github.com/avenoxai/avenoxskills) | Repoyu zip paketlere bölüp ajan olmayan bir modele inceletme |
+| `avenox-video`, `avenox-thumbnail` | [avenoxai/avenoxskills](https://github.com/avenoxai/avenoxskills) | Video kurgu hattı ve YouTube kapak üretimi |
+
+---
+
 ## Geliştirme
 
-Skill'lerin çalışan kopyası `~/.claude/skills/` altında durur, repo bunun aynasıdır.
+Skill'lerin çalışan kopyası `~/.claude/skills/` (Claude Code) ve `~/.agents/skills/`
+(Codex) altında durur, repo bunların aynasıdır.
 Değişiklikten sonra:
 
 ```bash

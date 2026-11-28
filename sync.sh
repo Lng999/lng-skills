@@ -1,24 +1,27 @@
 #!/bin/bash
-# ~/.claude/skills/ altindaki calisan kopyayi bu repoya aynala.
+# Calisan kopyalari bu repoya aynala: Claude Code skill'leri ~/.claude/skills/,
+# Codex skill'leri ~/.agents/skills/ altinda durur.
 # Repo kokunden calistir: ./sync.sh
 set -eu
 
 REPO_DIR=$(CDPATH='' cd "$(dirname "$0")" && pwd)
-SRC="$HOME/.claude/skills"
+SRCS="$HOME/.claude/skills $HOME/.agents/skills"
 AGENTS="$HOME/.claude/agents"
-
-[ -d "$SRC" ] || { echo "hata: $SRC yok"; exit 1; }
 
 for skill_path in "$REPO_DIR"/skills/*/; do
   [ -d "$skill_path" ] || continue
   name=$(basename "$skill_path")
-  if [ ! -d "$SRC/$name" ]; then
+  src=""
+  for d in $SRCS; do
+    if [ -d "$d/$name" ]; then src="$d/$name"; break; fi
+  done
+  if [ -z "$src" ]; then
     echo "atlandi: $name (yerelde kurulu degil)"
     continue
   fi
   rm -rf "$skill_path"
-  cp -r "$SRC/$name" "$REPO_DIR/skills/$name"
-  echo "aynalandi: $name"
+  cp -r "$src" "$REPO_DIR/skills/$name"
+  echo "aynalandi: $name ($src)"
 done
 
 # Yerel calisma artiklarini repoya tasima.
